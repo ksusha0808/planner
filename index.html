@@ -261,7 +261,9 @@ const LCOL=['#039be5','#ad1457','#0b8043','#f4511e','#8e24aa','#3f51b5','#e67c73
 const listColor=l=>{const i=META().lists.indexOf(l);return i<0?'#616161':LCOL[i%LCOL.length]};
 const hm=s=>s?s.replace(/^0(\d)/,'$1'):'';
 const trange=t=>t.time?hm(t.time)+(t.end&&t.end>t.time?'–'+hm(t.end):''):'';
-function occurs(t,d){if(!t.date)return false;if(!isRep(t))return t.date===d;if(d<t.date||(t.until&&d>t.until)||(t.skip||[]).includes(d))return false;return dow(d)===dow(t.date)}
+function occurs(t,d){if(!t.date)return false;if(!isRep(t))return t.date===d;if(d<t.date||(t.until&&d>t.until)||(t.skip||[]).includes(d)||dow(d)!==dow(t.date))return false;const ev=+t.every||1;return ev<2||Math.round((new Date(d+'T12:00')-new Date(t.date+'T12:00'))/6048e5)%ev===0}
+const repLabel=t=>(+t.every>1?'раз в '+t.every+' недели ':'')+PODOW[dow(t.date)];
+const repOpts=sel=>[['','Не повторять'],['1','Каждую неделю'],['2','Раз в 2 недели'],['3','Раз в 3 недели'],['4','Раз в 4 недели']].map(([v,l])=>`<option value="${v}"${String(sel)===v?' selected':''}>${l}</option>`).join('');
 function dayItems(d){return tasks().filter(t=>occurs(t,d)).map(t=>isRep(t)?{...t,_occ:d,done:(t.doneDates||[]).includes(d)}:t)}
 function nextOcc(t){for(let i=0;i<8;i++){const d=addDays(TODAY,i);if(occurs(t,d))return d}return t.date}
 const narrow=()=>window.matchMedia('(max-width:700px)').matches;
@@ -279,7 +281,7 @@ function taskLi(t,hideWhen){const rep=isRep(t),oc=t._occ;
   <button class="btn">Сохранить</button><button type="button" class="btn plain" data-act="cancel">Отмена</button></form></li>`}
  const late=!rep&&!t.done&&((t.date&&t.date<TODAY)||(t.week&&t.week<THISW));
  let when='';
- if(rep)when=`<span class="tag">${oc&&oc!==TODAY?fmtD(oc)+' ':''}${trange(t)||'весь день'}</span><span>${oc?'повторяется':PODOW[dow(t.date)]}</span>`;
+ if(rep)when=`<span class="tag">${oc&&oc!==TODAY?fmtD(oc)+' ':''}${trange(t)||'весь день'}</span><span>${oc?(+t.every>1?'раз в '+t.every+' нед.':'повторяется'):repLabel(t)}</span>`;
  else if(t.date)when=`<span class="tag${late?' late':''}">${fmtD(t.date)}${t.time?' '+trange(t):''}</span>`;
  else if(t.week&&!hideWhen)when=`<span class="tag${late?' late':''}">${wname(t.week)}</span>`;
  const ed=rep?`data-act="evedit" data-id="${t.id}" data-d="${oc||nextOcc(t)}"`:`data-act="edit" data-id="${t.id}"`;
@@ -293,7 +295,7 @@ function quickAdd(pre,defMode,defDate,defWeek){const m=META();const mode=UI.mode
  return `<form class="row" data-form="add" data-p="${pre}" data-mode="${mode}">
  <input type="text" id="${pre}_title" class="grow" placeholder="${mode==='week'?'Что сделать за неделю?':'Что нужно сделать?'}" required aria-label="Новая задача">
  <div class="seg mini"><button type="button" class="${mode==='day'?'on':''}" data-act="mode" data-p="${pre}" data-v="day">На день</button><button type="button" class="${mode==='week'?'on':''}" data-act="mode" data-p="${pre}" data-v="week">На неделю</button></div>
- ${mode==='day'?(pre==='c'?'':`<input type="date" id="${pre}_date" value="${defDate||''}" aria-label="Дата">`)+`<label class="ck">с <input type="time" id="${pre}_time" aria-label="Начало"></label><label class="ck">до <input type="time" id="${pre}_end" aria-label="Конец"></label><label class="ck"><input type="checkbox" id="${pre}_rep"> Каждую неделю</label>`:`<select id="${pre}_week" aria-label="Неделя">${weekOpts(defWeek||THISW)}</select>`}
+ ${mode==='day'?(pre==='c'?'':`<input type="date" id="${pre}_date" value="${defDate||''}" aria-label="Дата">`)+`<label class="ck">с <input type="time" id="${pre}_time" aria-label="Начало"></label><label class="ck">до <input type="time" id="${pre}_end" aria-label="Конец"></label><select id="${pre}_rep" aria-label="Повтор">${repOpts('')}</select>`:`<select id="${pre}_week" aria-label="Неделя">${weekOpts(defWeek||THISW)}</select>`}
  <select id="${pre}_list" aria-label="Список">${opts(m.lists,UI.filter!=='Все'?UI.filter:m.lists[0])}</select>
  <label class="ck"><input type="checkbox" id="${pre}_prio"> Важно</label>
  <button class="btn">Добавить</button></form>`}
@@ -354,7 +356,7 @@ V.tasks=()=>{const m=META();const vis=visible();const open=vis.filter(t=>!t.done
  <div class="card">${quickAdd('t','day','')}
  <div class="chips">${['Все',...m.lists].map(l=>`<button class="chip${UI.filter===l?' on':''}" data-act="filter" data-l="${esc(l)}">${esc(l)}</button>`).join('')}</div>
  ${open.length?g.filter(x=>x[1].length).map(([n,a,bad,hw])=>`<div class="sec${bad?' bad':''}">${n}<span>${a.length}</span></div>${tlist(a,'',hw)}`).join(''):'<div class="empty">Всё сделано. Можно выдохнуть.</div>'}
- ${series.length?`<div class="sec">Расписание — каждую неделю<span>${series.length}</span></div><ul class="tasks">${series.map(t=>taskLi(t)).join('')}</ul>`:''}
+ ${series.length?`<div class="sec">Расписание — повторяется<span>${series.length}</span></div><ul class="tasks">${series.map(t=>taskLi(t)).join('')}</ul>`:''}
  ${done.length?`<div class="sec"><button class="chip" data-act="showdone">${UI.showDone?'Скрыть':'Показать'} выполненные (${done.length})</button></div>${UI.showDone?tlist(done):''}`:''}</div>`};
 
 function monthView(){const y=UI.calY,mo=UI.calM;const first=new Date(y,mo,1);const start=new Date(y,mo,1-((first.getDay()+6)%7));
@@ -376,12 +378,12 @@ const toM=x=>{const [a,b]=String(x).split(':').map(Number);return a*60+(b||0)};
 const fromM=m=>pad(Math.floor(m/60))+':'+pad(m%60);
 function evEditor(){const e=UI.ev,m=META();const t=e.id?DB.items[e.id]:null;if(e.id&&!t)return'';
  const rep=t?isRep(t):false;const v=t||{title:'',date:e.date,time:e.time||'',end:e.end||'',list:m.lists[0],until:'',prio:0};
- return `<div class="card evcard"><h2>${t?'Изменить':'Новое событие'}${t&&rep?` <span style="color:var(--mut);font-size:14px;font-family:Manrope">повторяется ${PODOW[dow(t.date)]}</span>`:''}</h2>
+ return `<div class="card evcard"><h2>${t?'Изменить':'Новое событие'}${t&&rep?` <span style="color:var(--mut);font-size:14px;font-family:Manrope">повторяется ${repLabel(t)}</span>`:''}</h2>
  <form class="row" data-form="ev"><input type="text" id="ev_title" class="grow" value="${esc(v.title)}" required placeholder="Например: Алгебра, или Злата — 800" aria-label="Название">
  <label class="ck">${rep?'Начиная с':'Дата'} <input type="date" id="ev_date" value="${esc(v.date||e.date)}" required></label>
  <label class="ck">с <input type="time" id="ev_time" value="${esc(v.time||'')}"></label><label class="ck">до <input type="time" id="ev_end" value="${esc(v.end||'')}"></label>
  <select id="ev_list" aria-label="Список">${opts(m.lists,v.list)}</select>
- <label class="ck"><input type="checkbox" id="ev_rep"${rep?' checked':''}> Каждую неделю</label>
+ <select id="ev_rep" aria-label="Повтор">${repOpts(rep?String(+t.every||1):'')}</select>
  <label class="ck">повторять до <input type="date" id="ev_until" value="${esc(v.until||'')}" aria-label="Повторять до (необязательно)"></label>
  <label class="ck"><input type="checkbox" id="ev_prio"${v.prio?' checked':''}> Важно</label>
  <div class="row" style="flex-basis:100%"><button class="btn">Сохранить</button><button type="button" class="btn plain" data-act="evcancel">Отмена</button>
@@ -568,15 +570,15 @@ document.getElementById('importfile').addEventListener('change',async e=>{const 
 document.addEventListener('submit',e=>{e.preventDefault();const f=e.target,k=f.dataset.form;
  if(k==='add'){const p=f.dataset.p,mode=f.dataset.mode;const title=val(p+'_title');if(!title)return;const keepList=val(p+'_list');
   const t={id:uid(),kind:'task',title,list:keepList,prio:val(p+'_prio')?1:0,done:false,created:Date.now(),date:'',week:'',time:''};
-  if(mode==='week')t.week=val(p+'_week');else{t.date=p==='c'?UI.sel:val(p+'_date');t.time=val(p+'_time');t.end=t.time?val(p+'_end'):'';if(val(p+'_rep')){t.repeat='weekly';if(!t.date)t.date=TODAY}}
+  if(mode==='week')t.week=val(p+'_week');else{t.date=p==='c'?UI.sel:val(p+'_date');t.time=val(p+'_time');t.end=t.time?val(p+'_end'):'';const rv=+val(p+'_rep');if(rv){t.repeat='weekly';t.every=rv;if(!t.date)t.date=TODAY}}
   clear(p+'_');drafts[p+'_list']=keepList;if(mode==='week')drafts[p+'_week']=t.week;save(t);const el=document.getElementById(p+'_title');if(el)el.focus()}
  else if(k==='edit'){const t=DB.items[f.dataset.id];if(!t)return;UI.editing=null;const date=val('e_date');
   const tm=date?val('e_time'):'';clear('e_');save({...t,title:val('e_title')||t.title,date,time:tm,end:tm?val('e_end'):'',week:date?'':val('e_week'),list:val('e_list'),prio:val('e_prio')?1:0})}
  else if(k==='ev'){const e=UI.ev;if(!e)return;const title=val('ev_title');if(!title)return;const time=val('ev_time');let end=time?val('ev_end'):'';
-  if(end&&end<=time){toast('Конец должен быть позже начала');return}const r=val('ev_rep');
-  const fields={title,date:val('ev_date')||e.date,time,end,list:val('ev_list'),prio:val('ev_prio')?1:0,repeat:r?'weekly':'',until:r?val('ev_until'):'',week:''};
+  if(end&&end<=time){toast('Конец должен быть позже начала');return}const r=+val('ev_rep');
+  const fields={title,date:val('ev_date')||e.date,time,end,list:val('ev_list'),prio:val('ev_prio')?1:0,repeat:r?'weekly':'',every:r||1,until:r?val('ev_until'):'',week:''};
   const old=e.id?DB.items[e.id]:null;UI.ev=null;UI.sel=fields.date>UI.sel&&!r?fields.date:UI.sel;clear('ev_');
-  if(old)save({...old,...fields});else save({id:uid(),kind:'task',done:false,created:Date.now(),...fields});toast(old?'Сохранено':(r?'Событие добавлено на каждую неделю':'Событие добавлено'))}
+  if(old)save({...old,...fields});else save({id:uid(),kind:'task',done:false,created:Date.now(),...fields});toast(old?'Сохранено':(r?(r>1?'Событие добавлено: раз в '+r+' недели':'Событие добавлено на каждую неделю'):'Событие добавлено'))}
  else if(k==='tx'){const amount=num(val('m_amount'));if(amount<=0){toast('Введи сумму больше нуля');return}
   const ty=UI.txType,c=val('m_cat_'+(ty==='take'?'save':ty)),date=val('m_date')||TODAY,note=val('m_note'),created=Date.now();
   const rec={id:uid(),kind:'tx',type:ty==='take'?'save':ty,amount:ty==='take'?-amount:amount,date,note,created};
