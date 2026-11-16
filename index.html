@@ -168,6 +168,31 @@ code{overflow-wrap:anywhere;font-size:13px}
 .nowl{position:absolute;left:0;right:0;height:2px;background:#ea4335;z-index:3;pointer-events:none}.nowl::before{content:"";position:absolute;left:-6px;top:-5px;width:12px;height:12px;border-radius:99px;background:#ea4335}
 .wkhint{font-size:13px;color:var(--mut);margin:8px 2px 0}
 @media(max-width:700px){.wkhead,.wkall,.wkbody{grid-template-columns:40px repeat(var(--n),minmax(0,1fr))}.wk{--h:44px}.wkd b{font-size:19px;width:36px;height:36px}}
+/* desktop widget */
+body.wmode{background:var(--bg)}body.wmode .top,body.wmode #nav{display:none}body.wmode .wrap{padding:0;max-width:none}
+.wg{display:flex;flex-direction:column;height:100vh;min-height:420px;background:var(--bg);overflow:hidden}
+.wghead{background:linear-gradient(160deg,#5a49e0,var(--band) 60%);color:#fff;padding:16px 18px 14px;position:relative}
+.wgclock{font-family:Unbounded,Manrope,sans-serif;font-weight:500;font-size:46px;line-height:1;letter-spacing:-1px}
+.wgdate{opacity:.85;font-size:14px;margin-top:4px}.wgdate::first-letter{text-transform:uppercase}
+.wgnow{margin-top:12px;background:rgba(255,255,255,.14);border-radius:12px;padding:8px 12px;font-size:14px;line-height:1.35}
+.wgnow b{font-weight:800}.wgnow small{display:block;opacity:.8;font-size:12px}
+.wgnow i{display:inline-block;width:8px;height:8px;border-radius:99px;margin-right:6px;vertical-align:1px}
+.wgtabs{display:flex;gap:6px;padding:10px 14px 6px;align-items:center}
+.wgtabs .chip{min-height:32px;padding:4px 12px}.wgtabs .sp{flex:1}
+.wgtabs a,.wgtabs button.link{font-size:13px;color:var(--vio);font-weight:700;text-decoration:none;background:none;border:0;cursor:pointer;padding:6px}
+.wgscroll{flex:1;overflow-y:auto;padding:0 14px 10px;scrollbar-width:thin}
+.wgtl{position:relative;margin-left:42px;background-image:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px var(--wh))}
+.wgtl .tm{position:absolute;left:-42px;width:36px;text-align:right;transform:translateY(-50%);font-size:11px;color:var(--mut)}
+.wgtl .ev{left:2px;right:2px;width:auto}
+.wgtl .ev b{-webkit-line-clamp:2}
+.wgall{display:flex;flex-direction:column;gap:2px;margin:4px 0 8px 42px}
+.wgfoot{border-top:1px solid var(--line);padding:8px 14px;font-size:13px;color:var(--mut);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wgfoot .btn{min-height:36px;padding:6px 12px;font-size:14px}
+.wgempty{color:var(--mut);font-size:14px;padding:16px 0;text-align:center}
+.wgtask{display:flex;align-items:center;gap:8px;font-size:14px;padding:4px 0}
+.wgtask .chk{width:22px;height:22px;margin:0;border-radius:7px}.wgtask .chk::after{left:6px;top:1px;width:6px;height:11px}
+.wgtask.done span{text-decoration:line-through;color:var(--mut)}
+.wgsec{font-size:12px;font-weight:800;color:var(--mut);margin:10px 0 2px}
 @media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){
  .top{padding-bottom:16px}
@@ -242,7 +267,7 @@ function remove(id){const o=DB.items[id];if(o)save({...o,del:true})}
 
 /* ---------- UI state ---------- */
 let ui={};try{ui=JSON.parse(localStorage.getItem('planner-ui')||'{}')}catch(e){}
-const UI={tab:ui.tab||'today',filter:'Все',calY:now.getFullYear(),calM:now.getMonth(),sel:TODAY,mY:now.getFullYear(),mM:now.getMonth(),editing:null,editGoal:null,txType:'out',showDone:false,cview:'week',ev:null,msub:'ledger',speriod:'month',scat:null,mode:{},feed:''};
+const UI={tab:ui.tab||'today',filter:'Все',calY:now.getFullYear(),calM:now.getMonth(),sel:TODAY,mY:now.getFullYear(),mM:now.getMonth(),editing:null,editGoal:null,txType:'out',showDone:false,wday:'today',cview:'week',ev:null,msub:'ledger',speriod:'month',scat:null,mode:{},feed:''};
 const drafts={};
 
 /* ---------- toast ---------- */
@@ -405,7 +430,7 @@ function weekView(){const nr=narrow(),n=nr?3:7;const s=n===7?monday(UI.sel):UI.s
   return `<div class="wkcol" data-act="slot" data-d="${d}" data-h0="${H0}" data-ph="${PH}">${evs}${nl}</div>`}).join('');
  const times=[];for(let hh=H0+1;hh<H1;hh++)times.push(`<span style="top:${(hh-H0)*PH}px">${hh}:00</span>`);
  const sw=monday(UI.sel);const wk=plain().filter(t=>t.week===sw);
- return `${cviewSeg()}<div class="mhead"><button class="arrow" data-act="wk" data-v="-1" aria-label="Назад">‹</button><h2>${title}</h2><button class="arrow" data-act="wk" data-v="1" aria-label="Вперёд">›</button><button class="chip" data-act="caltoday">Сегодня</button><button class="btn" data-act="evnew">+ Событие</button></div>
+ return `${cviewSeg()}<div class="mhead"><button class="arrow" data-act="wk" data-v="-1" aria-label="Назад">‹</button><h2>${title}</h2><button class="arrow" data-act="wk" data-v="1" aria-label="Вперёд">›</button><button class="chip" data-act="caltoday">Сегодня</button><button class="btn" data-act="evnew">+ Событие</button>${'documentPictureInPicture' in window&&!pipWin?'<button class="btn ghost" data-act="pip">Виджет поверх окон</button>':''}</div>
  ${UI.ev?evEditor():''}
  <div class="wk" style="--n:${n};--h:${PH}px;--total:${(H1-H0)*PH}px"><div class="wkhead"><div></div>${hdr}</div>
  ${hasAll?`<div class="wkall"><div class="lbl">весь день</div>${allDay.map((a,i)=>`<div>${a.map(t=>`<button class="chipev${t.done?' done':''}" style="background:${listColor(t.list)}${t.done?';opacity:.5':''}" data-act="evedit" data-id="${t.id}" data-d="${days[i]}">${esc(t.title)}</button>`).join('')}</div>`).join('')}</div>`:''}
@@ -504,13 +529,63 @@ V.set=()=>{const m=META();const c=DB.cfg;
  <label class="note" for="s_sources" style="display:block">Источники дохода</label><input type="text" id="s_sources" class="full" value="${esc(m.sources.join(', '))}">
  <label class="note" for="s_cats" style="display:block">Категории расходов</label><input type="text" id="s_cats" class="full" value="${esc(m.cats.join(', '))}">
  <div style="margin-top:14px"><button class="btn">Сохранить</button></div><div class="note">Цели и копилки — во вкладке «Деньги».</div></form>
+ <div class="card"><h2>Виджет на ноутбук</h2><p class="note" style="margin-top:0">Компактное окно «Мой день»: часы, расписание по времени, что сейчас и что дальше.</p>
+ <div class="row"><button class="btn" data-act="pip">Закрепить поверх окон</button><button class="btn ghost" data-act="wgwin">Открыть отдельным окном</button></div>
+ <div class="note"><b>Поверх окон</b> — маленькое окошко, которое всегда видно над другими программами (Chrome, Edge, Яндекс Браузер). Работает, пока открыт планер.<br><b>Отдельным окном</b> — обычное окно, его можно поставить сбоку экрана. Ещё быстрее: правый клик по иконке установленного планера → «Виджет: мой день».</div></div>
  <div class="card"><h2>Как поставить приложение</h2><div class="note" style="margin:0"><b>iPhone (Safari):</b> «Поделиться» → «На экран “Домой”».<br><b>Android (Chrome):</b> меню ⋮ → «Установить приложение».<br><b>Ноутбук (Chrome / Edge / Яндекс):</b> значок установки справа в адресной строке.</div></div>
  <div class="card"><h2>Резервная копия</h2><div class="row"><button class="btn ghost" data-act="export">Скачать копию</button><button class="btn plain" data-act="import">Загрузить копию</button></div><div class="note">Загрузка добавляет данные из файла к текущим, ничего не стирая.</div></div></div>
  <div class="col"><div class="card"><h2>Синхронизация</h2>${syncCard}</div><div class="card"><h2>Виджет календаря на телефоне</h2>${feedCard}</div></div></div>`};
 
+/* ---------- desktop widget ---------- */
+const WIDGET=/[?&]widget/.test(location.search)||location.hash==='#widget';
+let pipWin=null,wgScroll=null;
+function widgetHTML(){setToday();const d=UI.wday==='tom'?TOM:TODAY;const its=dayItems(d);const nowM=now.getHours()*60+now.getMinutes();
+ const timed=its.filter(t=>t.time).map(t=>{const a=toM(t.time);return{t,a,b:t.end&&t.end>t.time?toM(t.end):a+60}}).sort((x,y)=>x.a-y.a);
+ const untimed=its.filter(t=>!t.time);
+ let mn=8*60,mx=21*60;timed.forEach(e=>{mn=Math.min(mn,e.a);mx=Math.max(mx,e.b)});const H0=Math.floor(mn/60),H1=Math.min(24,Math.ceil(mx/60)),PH=42;
+ // lanes
+ const out=[];let cl=[],cEnd=-1;const flush=()=>{const ends=[];cl.forEach(e=>{let l=ends.findIndex(x=>x<=e.a);if(l<0){l=ends.length;ends.push(0)}ends[l]=e.b;e.l=l});cl.forEach(e=>e.n=ends.length);out.push(...cl);cl=[]};
+ timed.forEach(e=>{if(cl.length&&e.a>=cEnd){flush();cEnd=-1}cl.push(e);cEnd=Math.max(cEnd,e.b)});flush();
+ const evs=out.map(e=>{const top=(e.a-H0*60)/60*PH,ht=Math.max((e.b-e.a)/60*PH-2,20);const past=d===TODAY&&e.b<=nowM;
+  return `<button class="ev${ht<36?' sm':''}${past?' past':''}${e.t.done?' done':''}" style="top:${top}px;height:${ht}px;left:calc(${e.l} * 100% / ${e.n} + 2px);width:calc(100% / ${e.n} - 4px);right:auto;background:${listColor(e.t.list)}" data-act="wgtoggle" data-id="${e.t.id}" data-d="${d}" title="Нажми, чтобы отметить выполненным"><b>${esc(e.t.title)}</b><span>${trange(e.t)}</span></button>`}).join('');
+ const nl=d===TODAY&&nowM>=H0*60&&nowM<=H1*60?`<div class="nowl" style="top:${(nowM-H0*60)/60*PH}px"></div>`:'';
+ const tms=[];for(let hh=H0+1;hh<H1;hh++)tms.push(`<span class="tm" style="top:${(hh-H0)*PH}px">${hh}:00</span>`);
+ // now / next
+ let info='';
+ if(d===TODAY){const cur=timed.filter(e=>e.a<=nowM&&nowM<e.b&&!e.t.done);const nx=timed.find(e=>e.a>nowM&&!e.t.done);
+  const dur=m=>m<60?m+' мин':Math.floor(m/60)+' ч'+(m%60?' '+(m%60)+' мин':'');
+  if(cur.length)info+=cur.map(e=>`<div><i style="background:#6ff0b0"></i>Сейчас: <b>${esc(e.t.title)}</b> · до ${hm(fromM(e.b))}</div>`).join('');
+  if(nx)info+=`<div${cur.length?' style="margin-top:4px"':''}><i style="background:${listColor(nx.t.list)}"></i>Далее в ${hm(nx.t.time)}: <b>${esc(nx.t.title)}</b><small>через ${dur(nx.a-nowM)}</small></div>`;
+  if(!info)info=timed.length?'<div>На сегодня по расписанию всё. Можно отдыхать.</div>':'<div>Сегодня по расписанию ничего нет.</div>'}
+ else{info=timed.length?`<div>Завтра первое: <b>${esc(timed[0].t.title)}</b> в ${hm(timed[0].t.time)}<small>всего ${timed.length} ${plural(timed.length,'событие','события','событий')}</small></div>`:'<div>Завтра по расписанию ничего нет.</div>'}
+ const wk=plain().filter(t=>t.week===THISW&&!t.done);
+ return `<div class="wg"><div class="wghead"><div class="wgclock">${pad(now.getHours())}:${pad(now.getMinutes())}</div><div class="wgdate">${new Date(d+'T12:00').toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'})}</div><div class="wgnow">${info}</div></div>
+ <div class="wgtabs"><button class="chip${UI.wday!=='tom'?' on':''}" data-act="wday" data-v="today">Сегодня</button><button class="chip${UI.wday==='tom'?' on':''}" data-act="wday" data-v="tom">Завтра</button><span class="sp"></span>${pipWin&&!WIDGET?'':`<button class="link" data-act="openapp">Открыть планер</button>`}</div>
+ <div class="wgscroll">${untimed.length?`<div class="wgsec">Без времени</div>${untimed.map(t=>`<div class="wgtask${t.done?' done':''}"><button class="chk" data-act="wgtoggle" data-id="${t.id}"${t._occ?` data-d="${d}"`:''} aria-label="Выполнено"></button><span>${esc(t.title)}</span></div>`).join('')}`:''}
+ ${timed.length?`<div class="wgtl" style="height:${(H1-H0)*PH}px;--wh:${PH}px">${tms.join('')}${evs}${nl}</div>`:`<div class="wgempty">Нет событий со временем</div>`}
+ ${wk.length?`<div class="wgsec">Задачи на неделю · ${wk.length}</div>${wk.slice(0,6).map(t=>`<div class="wgtask"><button class="chk" data-act="wgtoggle" data-id="${t.id}" aria-label="Выполнено"></button><span>${esc(t.title)}</span></div>`).join('')}`:''}</div>
+ <div class="wgfoot">${!pipWin&&'documentPictureInPicture' in window?`<button class="btn ghost" data-act="pip">Закрепить поверх окон</button>`:''}<span>${UI.wday==='tom'?'':'Нажми на событие — отметить выполненным'}</span></div></div>`}
+function renderWidget(target){const sc=target.querySelector('.wgscroll');const st=sc?sc.scrollTop:null;target.innerHTML=widgetHTML();const nsc=target.querySelector('.wgscroll');
+ if(nsc){if(st!==null&&wgScroll!=='reset')nsc.scrollTop=st;else{const nl=nsc.querySelector('.nowl');const ev=nsc.querySelector('.ev:not(.past)');const y=nl?nl.offsetTop:ev?ev.offsetTop:0;nsc.scrollTop=Math.max(0,y-90)}wgScroll=null}}
+function wgClick(e){const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
+ if(a==='wgtoggle'){const t=DB.items[id];if(!t)return;const d=b.dataset.d;if(isRep(t)&&d){const dd=t.doneDates||[];save({...t,doneDates:dd.includes(d)?dd.filter(x=>x!==d):[...dd,d]})}else save({...t,done:!t.done})}
+ else if(a==='wday'){UI.wday=b.dataset.v;wgScroll='reset';render()}
+ else if(a==='openapp'){if(WIDGET){window.open('./','_blank')}else{window.focus()}}
+ else if(a==='pip'){openPip()}}
+async function openPip(){if(!('documentPictureInPicture' in window)){toast('Этот браузер не умеет окна поверх других. Подойдут Chrome, Edge или Яндекс Браузер.');return}
+ try{const w=await documentPictureInPicture.requestWindow({width:360,height:600});pipWin=w;
+  document.querySelectorAll('style,link[rel=stylesheet]').forEach(n=>w.document.head.appendChild(n.cloneNode(true)));
+  const m=w.document.createElement('meta');m.name='color-scheme';m.content='light dark';w.document.head.appendChild(m);
+  w.document.title='Мой день';w.document.body.className='wmode';w.document.body.style.margin='0';w.document.body.innerHTML='<div id="wroot"></div>';
+  w.document.addEventListener('click',wgClick);w.addEventListener('pagehide',()=>{pipWin=null;render()});wgScroll='reset';render()}
+ catch(err){toast('Не получилось открыть окно: '+(err.message||err))}}
+setInterval(()=>{if(WIDGET||pipWin){const old=TODAY;setToday();if(WIDGET)render();else if(pipWin){renderWidget(pipWin.document.getElementById('wroot'))}if(old!==TODAY)render()}},20000);
+
 /* ---------- render ---------- */
 const main=document.getElementById('main');
-function render(){const ae=document.activeElement,f=ae&&ae.id;
+function render(){if(pipWin&&!pipWin.closed){const r=pipWin.document.getElementById('wroot');if(r)renderWidget(r)}
+ if(WIDGET){document.body.classList.add('wmode');renderWidget(main);return}
+ const ae=document.activeElement,f=ae&&ae.id;
  main.innerHTML=(V[UI.tab]||V.today)();
  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===UI.tab));
  for(const id in drafts){const el=document.getElementById(id);if(el){if(el.type==='checkbox')el.checked=drafts[id];else el.value=drafts[id]}}
@@ -523,8 +598,10 @@ const num=s=>parseFloat(String(s).replace(/\s/g,'').replace(',','.'))||0;
 const split=s=>s.split(',').map(x=>x.trim()).filter(Boolean);
 
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
+ if(WIDGET||['wgtoggle','wday','openapp','pip'].includes(a)){if(['wgtoggle','wday','openapp','pip'].includes(a))wgClick(e);return}
  if(a==='tab'){UI.tab=b.dataset.t;UI.editing=null;UI.editGoal=null;UI.ev=null;try{localStorage.setItem('planner-ui',JSON.stringify({tab:UI.tab}))}catch(e){}render();window.scrollTo(0,0)}
  else if(a==='toggle'){const t=DB.items[id];if(!t)return;const d=b.dataset.d;if(d){const dd=t.doneDates||[];save({...t,doneDates:dd.includes(d)?dd.filter(x=>x!==d):[...dd,d]})}else save({...t,done:!t.done})}
+ else if(a==='wgwin'){const w=window.open('./?widget','planner-widget','popup,width=380,height=680');if(!w)location.href='./?widget'}
  else if(a==='cview'){UI.cview=b.dataset.v;UI.ev=null;render()}
  else if(a==='wk'){UI.sel=addDays(UI.sel,(+b.dataset.v)*(narrow()?3:7));UI.ev=null;render()}
  else if(a==='evnew'){UI.ev={date:UI.sel,time:'',end:''};clear('ev_');render();document.getElementById('ev_title')?.focus()}
