@@ -1,5 +1,5 @@
 // Офлайн-кэш приложения. При изменении файлов увеличь версию.
-const CACHE = 'planner-v2.2';
+const CACHE = 'planner-v2.3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-180.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -22,4 +22,5 @@ self.addEventListener('fetch', e => {
     }).catch(() => caches.match(req).then(r => r || (req.mode === 'navigate' ? caches.match('./index.html') : undefined)))
   );
 });
+
 
