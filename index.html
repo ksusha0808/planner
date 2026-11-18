@@ -167,6 +167,19 @@ code{overflow-wrap:anywhere;font-size:13px}
 .ev:hover{z-index:4;box-shadow:inset 4px 0 0 rgba(0,0,0,.2),0 4px 14px rgba(0,0,0,.25)}
 .nowl{position:absolute;left:0;right:0;height:2px;background:#ea4335;z-index:3;pointer-events:none}.nowl::before{content:"";position:absolute;left:-6px;top:-5px;width:12px;height:12px;border-radius:99px;background:#ea4335}
 .wkhint{font-size:13px;color:var(--mut);margin:8px 2px 0}
+.calwrap{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
+.side{position:sticky;top:12px;display:flex;flex-direction:column;gap:16px}
+.side .card{padding:16px}.side h2{font-size:16px;margin-bottom:10px}.side h2 span{color:var(--mut);font-size:13px;font-family:Manrope;font-weight:600}
+.slist{list-style:none;margin:6px 0 0;padding:0}
+.stask{display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--line);padding:2px 0}
+.stask .chk{width:22px;height:22px;margin:11px 8px 11px 2px;border-radius:99px;border-color:var(--lc,var(--mut))}
+.stask .chk::after{left:6px;top:2px;width:6px;height:11px}
+.stask.done .chk{background:var(--ok);border-color:var(--ok)}
+.stask .tbody{padding:6px 0;min-height:40px}.stask .tt{font-size:15px}
+.stask.done .tt{text-decoration:line-through;color:var(--mut)}
+.sadd{display:flex;gap:6px}.sadd input{flex:1;min-width:0}.sadd select{max-width:9.5em}
+.wkd small{font-size:10px;font-weight:700;color:var(--mut);text-transform:none;min-height:13px}
+@media(max-width:1000px){.calwrap{grid-template-columns:minmax(0,1fr)}.side{position:static}}
 @media(max-width:700px){.wkhead,.wkall,.wkbody{grid-template-columns:40px repeat(var(--n),minmax(0,1fr))}.wk{--h:44px}.wkd b{font-size:19px;width:36px;height:36px}}
 /* desktop widget */
 body.wmode{background:var(--bg)}body.wmode .top,body.wmode #nav{display:none}body.wmode .wrap{padding:0;max-width:none}
@@ -419,8 +432,7 @@ function weekView(){const nr=narrow(),n=nr?3:7;const s=n===7?monday(UI.sel):UI.s
  let mn=8*60,mx=21*60;items.flat().forEach(t=>{if(t.time){const a=toM(t.time),b=t.end&&t.end>t.time?toM(t.end):a+60;mn=Math.min(mn,a);mx=Math.max(mx,b)}});
  const H0=Math.floor(mn/60),H1=Math.min(24,Math.ceil(mx/60)),PH=nr?44:48;const nowM=now.getHours()*60+now.getMinutes();
  const title=range(s).replace(/^(\d+)–(.*)$/,'$1–$2')&&(()=>{const a=new Date(days[0]+'T12:00'),z=new Date(days[n-1]+'T12:00');return a.getMonth()===z.getMonth()?a.getDate()+'–'+short(days[n-1]):short(days[0])+' – '+short(days[n-1])})();
- const hdr=days.map(d=>{const dt=new Date(d+'T12:00');return `<button class="wkd${d===TODAY?' today':''}${d===UI.sel?' sel':''}" data-act="sel" data-d="${d}" aria-label="${dt.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'})}"><span>${dt.toLocaleDateString('ru-RU',{weekday:'short'})}</span><b>${dt.getDate()}</b></button>`}).join('');
- const allDay=items.map(its=>its.filter(t=>!t.time));const hasAll=allDay.some(a=>a.length);
+ const hdr=days.map((d,di)=>{const dt=new Date(d+'T12:00');const nt=items[di].filter(t=>!t.time&&!t.done).length;return `<button class="wkd${d===TODAY?' today':''}${d===UI.sel?' sel':''}" data-act="sel" data-d="${d}" aria-label="${dt.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'})}"><span>${dt.toLocaleDateString('ru-RU',{weekday:'short'})}</span><b>${dt.getDate()}</b><small>${nt?nt+' '+plural(nt,'задача','задачи','задач'):''}</small></button>`}).join('');
  const cols=days.map((d,di)=>{const timed=items[di].filter(t=>t.time).map(t=>{const a=toM(t.time);return{t,a,b:t.end&&t.end>t.time?toM(t.end):a+60}}).sort((x,y)=>x.a-y.a||y.b-x.b);
   const out=[];let cl=[],cEnd=-1;const flush=()=>{const ends=[];cl.forEach(e=>{let l=ends.findIndex(x=>x<=e.a);if(l<0){l=ends.length;ends.push(0)}ends[l]=e.b;e.l=l});cl.forEach(e=>e.n=ends.length);out.push(...cl);cl=[]};
   timed.forEach(e=>{if(cl.length&&e.a>=cEnd){flush();cEnd=-1}cl.push(e);cEnd=Math.max(cEnd,e.b)});flush();
@@ -432,11 +444,22 @@ function weekView(){const nr=narrow(),n=nr?3:7;const s=n===7?monday(UI.sel):UI.s
  const sw=monday(UI.sel);const wk=plain().filter(t=>t.week===sw);
  return `${cviewSeg()}<div class="mhead"><button class="arrow" data-act="wk" data-v="-1" aria-label="Назад">‹</button><h2>${title}</h2><button class="arrow" data-act="wk" data-v="1" aria-label="Вперёд">›</button><button class="chip" data-act="caltoday">Сегодня</button><button class="btn" data-act="evnew">+ Событие</button>${'documentPictureInPicture' in window&&!pipWin?'<button class="btn ghost" data-act="pip">Виджет поверх окон</button>':''}</div>
  ${UI.ev?evEditor():''}
- <div class="wk" style="--n:${n};--h:${PH}px;--total:${(H1-H0)*PH}px"><div class="wkhead"><div></div>${hdr}</div>
- ${hasAll?`<div class="wkall"><div class="lbl">весь день</div>${allDay.map((a,i)=>`<div>${a.map(t=>`<button class="chipev${t.done?' done':''}" style="background:${listColor(t.list)}${t.done?';opacity:.5':''}" data-act="evedit" data-id="${t.id}" data-d="${days[i]}">${esc(t.title)}</button>`).join('')}</div>`).join('')}</div>`:''}
+ <div class="calwrap"><div><div class="wk" style="--n:${n};--h:${PH}px;--total:${(H1-H0)*PH}px"><div class="wkhead"><div></div>${hdr}</div>
  <div class="wkbody"><div class="wktimes">${times.join('')}</div>${cols}</div></div>
- <div class="wkhint">Нажми на пустое место в сетке, чтобы добавить событие в это время. Нажми на событие, чтобы изменить его или отметить выполненным.</div>
- <div style="height:20px"></div><div class="card"><h2>Общие задачи на неделю <span style="color:var(--mut);font-size:14px;font-family:Manrope">${range(sw)}</span></h2>${quickAdd('c2','week','',sw)}<div style="height:6px"></div>${tlist(wk,'На эту неделю общих задач нет.',true)}</div>`}
+ <div class="wkhint">Нажми на пустое место в сетке, чтобы добавить событие со временем. Нажми на день вверху, чтобы открыть его список задач.</div></div>
+ <aside class="side">${sideTasks()}
+ <div class="card"><h2>На неделю <span>${range(sw)}</span></h2>${sideAdd('sw','Задача на неделю')}<ul class="slist">${wk.sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(b.prio||0)-(a.prio||0)||(a.created||0)-(b.created||0)).map(t=>sideLi(t)).join('')||'<li class="empty">Пока пусто</li>'}</ul></div></aside></div>`}
+function sideLi(t,d){const oc=t._occ;return `<li class="stask${t.done?' done':''}" style="--lc:${listColor(t.list)}"><button class="chk" data-act="toggle" data-id="${t.id}"${oc?` data-d="${oc}"`:''} aria-label="${t.done?'Вернуть':'Выполнено'}"></button>
+ <div class="tbody" ${isRep(t)?`data-act="evedit" data-id="${t.id}" data-d="${oc||d}"`:`data-act="sedit" data-id="${t.id}"`}><div class="tt">${t.prio?'<span class="tag hot">!</span> ':''}${esc(t.title)}</div><div class="tm"><span><i class="ldot" style="background:${listColor(t.list)}"></i>${esc(t.list||'')}</span>${t.date&&t.date!==d?`<span class="tag late">${fmtD(t.date)}</span>`:''}${isRep(t)?`<span>${+t.every>1?'раз в '+t.every+' нед.':'каждую неделю'}</span>`:''}</div></div>
+ <button class="x" ${isRep(t)?`data-act="evskip" data-id="${t.id}" data-d="${oc||d}" aria-label="Убрать на этот день"`:`data-act="deltask" data-id="${t.id}" aria-label="Удалить"`}>×</button></li>`}
+function sideAdd(p,ph){const m=META();return `<form class="sadd" data-form="sadd" data-p="${p}"><input type="text" id="${p}_title" placeholder="${ph}" required aria-label="${ph}"><select id="${p}_list" aria-label="Список">${opts(m.lists,m.lists[0])}</select><button class="btn" aria-label="Добавить">+</button></form>`}
+function sideTasks(){const d=UI.sel;const its=dayItems(d).filter(t=>!t.time).sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(b.prio||0)-(a.prio||0)||(a.created||0)-(b.created||0));
+ const late=d===TODAY?plain().filter(t=>!t.done&&t.date&&t.date<TODAY):[];
+ const dn=new Date(d+'T12:00').toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'short'});
+ const open=its.filter(t=>!t.done).length;
+ return `<div class="card"><h2>${d===TODAY?'Задачи на сегодня':d===TOM?'Задачи на завтра':'Задачи'} <span>${dn}${its.length?' · '+open+' из '+its.length:''}</span></h2>${sideAdd('sd','Новая задача на этот день')}
+ ${late.length?`<div class="sec bad">Просрочено</div><ul class="slist">${late.sort(byWhen).map(t=>sideLi(t,d)).join('')}</ul>`:''}
+ <ul class="slist">${its.map(t=>sideLi(t,d)).join('')||'<li class="empty">На этот день задач нет</li>'}</ul></div>`}
 
 const subnav=()=>`<div class="seg subnav"><button class="${UI.msub!=='stats'?'on':''}" data-act="msub" data-v="ledger">Учёт</button><button class="${UI.msub==='stats'?'on':''}" data-act="msub" data-v="stats">Статистика трат</button></div>`;
 V.money=()=>{if(UI.msub==='stats')return statsView();const m=META(),y=UI.mY,mo=UI.mM,st=monthStats(y,mo);const ty=UI.txType;const gs=goals();
@@ -602,6 +625,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]
  if(a==='tab'){UI.tab=b.dataset.t;UI.editing=null;UI.editGoal=null;UI.ev=null;try{localStorage.setItem('planner-ui',JSON.stringify({tab:UI.tab}))}catch(e){}render();window.scrollTo(0,0)}
  else if(a==='toggle'){const t=DB.items[id];if(!t)return;const d=b.dataset.d;if(d){const dd=t.doneDates||[];save({...t,doneDates:dd.includes(d)?dd.filter(x=>x!==d):[...dd,d]})}else save({...t,done:!t.done})}
  else if(a==='wgwin'){const w=window.open('./?widget','planner-widget','popup,width=380,height=680');if(!w)location.href='./?widget'}
+ else if(a==='sedit'){const t=DB.items[id];if(!t)return;if(t.week&&!t.date){UI.editing=id;UI.tab='tasks';clear('e_');render();window.scrollTo(0,0);return}UI.ev={id,date:t.date||UI.sel};clear('ev_');render();document.querySelector('.evcard')?.scrollIntoView({behavior:'smooth',block:'start'})}
  else if(a==='cview'){UI.cview=b.dataset.v;UI.ev=null;render()}
  else if(a==='wk'){UI.sel=addDays(UI.sel,(+b.dataset.v)*(narrow()?3:7));UI.ev=null;render()}
  else if(a==='evnew'){UI.ev={date:UI.sel,time:'',end:''};clear('ev_');render();document.getElementById('ev_title')?.focus()}
@@ -651,6 +675,9 @@ document.addEventListener('submit',e=>{e.preventDefault();const f=e.target,k=f.d
   clear(p+'_');drafts[p+'_list']=keepList;if(mode==='week')drafts[p+'_week']=t.week;save(t);const el=document.getElementById(p+'_title');if(el)el.focus()}
  else if(k==='edit'){const t=DB.items[f.dataset.id];if(!t)return;UI.editing=null;const date=val('e_date');
   const tm=date?val('e_time'):'';clear('e_');save({...t,title:val('e_title')||t.title,date,time:tm,end:tm?val('e_end'):'',week:date?'':val('e_week'),list:val('e_list'),prio:val('e_prio')?1:0})}
+ else if(k==='sadd'){const p=f.dataset.p;const title=val(p+'_title');if(!title)return;const list=val(p+'_list');
+  const t={id:uid(),kind:'task',title,list,prio:0,done:false,created:Date.now(),date:'',week:'',time:'',end:''};
+  if(p==='sw')t.week=monday(UI.sel);else t.date=UI.sel;clear(p+'_');drafts[p+'_list']=list;save(t);const el=document.getElementById(p+'_title');if(el)el.focus()}
  else if(k==='ev'){const e=UI.ev;if(!e)return;const title=val('ev_title');if(!title)return;const time=val('ev_time');let end=time?val('ev_end'):'';
   if(end&&end<=time){toast('Конец должен быть позже начала');return}const r=+val('ev_rep');
   const fields={title,date:val('ev_date')||e.date,time,end,list:val('ev_list'),prio:val('ev_prio')?1:0,repeat:r?'weekly':'',every:r||1,until:r?val('ev_until'):'',week:''};
