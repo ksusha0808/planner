@@ -1,5 +1,5 @@
 // Офлайн-кэш приложения. При изменении файлов увеличь версию.
-const CACHE = 'planner-v2.4';
+const CACHE = 'planner-v2.5';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-180.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
